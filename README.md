@@ -16,10 +16,11 @@ It is allowing you to execute queries using URLs or SQL directly within your Pyt
 2. Input question URL and Metabase Session. No need to provide parameters payload.
 3. JSON results have the same column sort order as the browser.
 4. Automatically check if Metabase session is available.
-5. Allow retry if an error occurs due to server slowdown.
-6. Allow entering multiple param values in bulk.
-7. Support both saved questions and unsaved questions.
-8. Support SQL query.
+5. Easy to filter data with a simple dict.
+6. Allow retry if an error occurs due to server slowdown.
+7. Allow entering multiple filter values in bulk.
+8. Support both saved questions and unsaved questions.
+9. Support SQL query.
 
 ## Installation
 ```shell
