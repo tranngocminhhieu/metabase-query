@@ -57,15 +57,17 @@ class Metabase(object):
         :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
         :return: One data or a list of data.
         '''
+        self.query_count = 0
+        self.parse_count = 0
+
         if filter_chunk_size < 1:
             raise ValueError('filter_chunk_size must be positive.')
 
         if format.lower() not in ['json', 'csv', 'xlsx']:
             raise ValueError('Metabase only supports JSON, CSV and XLSX formats.')
 
-        result = asyncio.run(self.handle_urls(urls=url, format=format.lower(), filters=filter, filter_chunk_size=filter_chunk_size, auto_combine=True))
-        self.query_count = 0
-        self.parse_count = 0
+        result = asyncio.run(self.handle_urls(urls=url, format=format.lower(), filters=filter, filter_chunk_size=filter_chunk_size))
+
         return result
 
     # Main 2
@@ -78,9 +80,9 @@ class Metabase(object):
         :param format: json, csv, xlsx.
         :return: One data or a list of data.
         '''
-        result = asyncio.run(self.SQL.query_sql(sqls=sql, databases=database, format=format.lower()))
         self.query_count = 0
         self.parse_count = 0
+        result = asyncio.run(self.SQL.query_sql(sqls=sql, databases=database, format=format.lower()))
         return result
 
 
@@ -102,10 +104,7 @@ class Metabase(object):
             if not isinstance(urls, list) and not isinstance(filters, list):
                 url_type = define_url(url=urls)
                 if url_type == 'sql':
-                    if filters:
-                        raise ValueError('Currently unsupported filter for SQL URL.')
-                    else:
-                        return await self.SQL.export_url(session=session, url=urls, format=format)
+                    return await self.SQL.export_url(session=session, url=urls, format=format, filters=filters)
                 elif url_type == 'card':
                     return await self.Card.query_card(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
                 elif url_type == 'dataset':
@@ -128,13 +127,10 @@ class Metabase(object):
                 for url, f in zip(urls, filters):
                     url_type = define_url(url=url)
                     if url_type == 'sql':
-                        if f:
-                            raise ValueError('Currently unsupported filter for SQL URL. Please use None for SQL URL in filter list.')
-                        else:
-                            task = asyncio.create_task(self.SQL.export_url(session=session, url=url, format=format))
-                            task.url = url
-                            task.filter = f
-                            tasks.append(task)
+                        task = asyncio.create_task(self.SQL.export_url(session=session, url=url, format=format, filters=filters))
+                        task.url = url
+                        task.filter = f
+                        tasks.append(task)
                     elif url_type == 'card':
                         task = asyncio.create_task(self.Card.query_card(session=session, url=url, format=format, filters=f, filter_chunk_size=filter_chunk_size))
                         task.url = url

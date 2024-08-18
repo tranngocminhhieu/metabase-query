@@ -1,17 +1,22 @@
-# 1.0.1
-- Add `return_exceptions` to `asyncio.gather`.
-- Auto apply nest_asyncio for Notebook.
+# 1.0.3
+- Add more package to install_requires.
+- SQL URL support filters and parameters.
 
 # 1.0.2
 - Rename function `sql_query` to `sql`.
 
+# 1.0.1
+- Add `return_exceptions` to `asyncio.gather`.
+- Auto apply nest_asyncio for Notebook.
+
+
 # 1.0.0
-1. Get question data in any data format provided by Metabase (JSON, CSV, XLSX).
-2. Input question URL and Metabase Session. No need to provide parameters payload.
-3. JSON results have the same column sort order as the browser.
-4. Automatically check if Metabase session is available.
-5. Easy to filter data with a simple dict.
-6. Allow retry if an error occurs due to server slowdown.
-7. Allow entering multiple filter values in bulk.
-8. Support both saved questions and unsaved questions.
-9. Support SQL query.
+- **Flexible Data Retrieval**: Retrieve data in any format supported by Metabase, including JSON, CSV, and XLSX.
+- **Simple Integration**: Execute queries by simply inputting the question URL and Metabase session—no need to manually provide parameters.
+- **Consistent Results**: JSON results maintain the same column order as displayed in the Metabase UI.
+- **Session Management**: Automatically checks the availability of the Metabase session.
+- **Effortless Filtering**: Easily apply filters to your queries using simple dictionaries.
+- **Error Handling**: Supports automatic retries in case of server errors or slowdowns.
+- **Bulk Filter Support**: Allows entering multiple filter values in a single request.
+- **Query Versatility**: Supports both saved and unsaved questions, as well as SQL queries.
+- **Utilize asynchronous libraries**: Send multiple requests concurrently to retrieve data efficiently.

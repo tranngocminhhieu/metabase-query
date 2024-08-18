@@ -5,7 +5,7 @@ README = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='metabase-query',
-    version='1.0.2',
+    version='1.0.3',
     description='Metabase query API with any URL and easy to filter.',
     long_description=README,
     long_description_content_type="text/markdown",
@@ -15,6 +15,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'tenacity',
-        'nest-asyncio'
+        'nest-asyncio',
+        'aiohttp',
+        'asyncio'
     ]
 )

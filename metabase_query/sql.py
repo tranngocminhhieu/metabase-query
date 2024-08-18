@@ -1,15 +1,17 @@
+import copy
 from urllib import parse
 import json
 import base64
 import re
 import aiohttp
 import asyncio
+from .utils import split_list, combine_results
 
 class SQL:
     def __init__(self, metabase):
         self.metabase = metabase
 
-    async def export_url(self, session, url, format='json'):
+    async def export_url(self, session, url, format='json', filters=None, filter_chunk_size=5000):
         '''
         Export data for SQL URL.
 
@@ -21,17 +23,75 @@ class SQL:
 
         parse_result = parse.urlparse(url=url)
         domain = f"{parse_result.scheme}://{parse_result.netloc}"
-        query = json.loads(base64.b64decode(parse_result.fragment))
-        dataset_query = query['dataset_query']
-
-        if query.get('parameters'):
-            raise ValueError('Currently unsupported parameters for SQL.')
-
-        form_data = {'query': json.dumps(dataset_query)}
-
+        fragment = json.loads(base64.b64decode(parse_result.fragment))
+        dataset_query = fragment['dataset_query']
+        query = parse.parse_qs(parse_result.query)
+        parameters = fragment['parameters']
         url = f"{domain}/api/dataset/{format}"
 
-        return await self.metabase.export(session=session, url=url, form_data=form_data, format=format)
+        # Clean filters and calculate bulk values
+        if filters:
+            filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
+            # Make sure value is list, the same with query
+            for filter in filters:
+                if not isinstance(filters[filter], list):
+                    filters[filter] = [filters[filter]]
+            max_filter_key = max(filters, key=lambda k: len(filters[k]))
+            max_filter_value_count = len(filters[max_filter_key])
+        else:
+            max_filter_key = None
+            max_filter_value_count = 0
+
+        # Prepare Form data (dataset_query)
+        if filters:
+            # Raise if filter slug is not valid.
+            available_parameter_slugs = [p['slug'] for p in parameters]
+            invalid_filters = set(filters) - set(available_parameter_slugs)
+            if invalid_filters:
+                raise ValueError(f"The {', '.join(invalid_filters)} {'filters' if len(invalid_filters) > 2 else 'filter'} {'are' if len(invalid_filters) > 2 else 'is'} not available for this query. These are the available filters: {', '.join(available_parameter_slugs)}.")
+            else:
+                # Save filter to query.
+                for filter in filters:
+                    query[filter] = filters[filter]
+
+        for p in parameters:
+            if p['slug'] in query:
+                param_value = query[p['slug']]
+                if 'number' in p['type']:
+                    param_value = [float(i) for i in param_value]
+                elif 'date' in p['type']:
+                    param_value = param_value[0]
+                p['value'] = param_value
+
+        dataset_query['parameters'] = parameters
+
+        # Send one request if there are no filter has values > filter_chunk_size
+        if max_filter_value_count <= filter_chunk_size:
+            form_data = {'query': json.dumps(dataset_query)}
+            return await self.metabase.export(session=session, url=url, form_data=form_data, format=format)
+
+        else:
+            if format not in ['json', 'csv']:
+                raise ValueError(f'Package only supports JSON and CSV formats with bulk filter values due to data combining limitations. Your {max_filter_key} filter is over filter_chunk_size {max_filter_value_count}/{filter_chunk_size}.')
+
+            # Slit values to chunks > Create a list of card_data
+            value_list = split_list(input_list=filters[max_filter_key], chunk_size=filter_chunk_size)
+            dataset_query_list = []
+            for value in value_list:
+                new_dataset_query = copy.deepcopy(dataset_query)
+                for parameter in new_dataset_query['parameters']:
+                    if parameter['target'][-1][-1] == max_filter_key:
+                        parameter['value'] = value
+                dataset_query_list.append(new_dataset_query)
+
+            tasks = []
+            for d in dataset_query_list:
+                form_data = {'query': json.dumps(d)}
+                task = asyncio.create_task(self.metabase.export(session=session, url=url, form_data=form_data, format=format))
+                tasks.append(task)
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            return combine_results(results=results, format=format, verbose=self.metabase.verbose)
 
     async def export_sql(self, session, sql, database, format='json'):
         '''
