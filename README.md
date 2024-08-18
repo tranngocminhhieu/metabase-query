@@ -59,7 +59,7 @@ url = 'https://your-domain.com/question#eW91cl9xdWVyeQ==...' # Table or unsaved 
 
 Don't need to find parameters from payload, just paste the URL from the browser.
 ```python
-data = mb.query(url=url)
+data = mb.query(url=url, format='json')
 ```
 - `format`: Support JSON, CSV, XLSX formats. Default is `'json'`.
 
