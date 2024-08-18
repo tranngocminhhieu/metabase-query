@@ -91,6 +91,7 @@ data = combine_results(results=[r['data'] for r in results], format='json')
 ```
 
 #### Multiple URLs
+It can use with a filter dictionary if needed.
 ```python
 urls = [
     'https://your-domain.com/question/123456-example?created_at=2024-08-01~2024-08-05',
