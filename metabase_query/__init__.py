@@ -1,10 +1,12 @@
 import asyncio
+
 import aiohttp
+import nest_asyncio
+
 from .card import Card
 from .dataset import Dataset
 from .sql import SQL
 
-import nest_asyncio
 nest_asyncio.apply()
 
 from tenacity import *
@@ -12,6 +14,18 @@ from .utils import raise_retry_errors, combine_results, define_url
 
 class Metabase(object):
     def __init__(self, metabase_session, retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None):
+        '''
+        Setting Metabase object.
+
+        :param metabase_session: Your Metabase Session.
+        :param retry_errors: None to retry with any error, a list of errors to retry with these errors only, contain matching. Default is None.
+        :param retry_attempts: 0 will not retry. Default is 3.
+        :param limit_per_host: The limit of connections per host. Default is 5.
+        :param timeout: Timeout in seconds for each connection. Default is 600.
+        :param verbose: Print log or not. Default is True.
+        :param domain: Not required for queries with URL, SQL queries is required. Default is None.
+        '''
+        # Settings
         self.metabase_session = metabase_session
         self.retry_errors = retry_errors
         self.retry_attempts = retry_attempts
@@ -20,96 +34,148 @@ class Metabase(object):
         self.verbose = verbose
         self.domain = domain
 
+        # Child classes
         self.Card = Card(metabase=self)
         self.Dataset = Dataset(metabase=self)
         self.SQL = SQL(metabase=self)
+
+        # For printing log
+        self.query_count = 0
+        self.parse_count = 0
 
     def print_if_verbose(self, *args):
         if self.verbose:
             print(*args)
 
-    def query(self, urls, filters=None, formats='json'):
-        pass
+    # Main 1
+    def query(self, urls, format='json', filters=None, filter_chunk_size=5000):
+        '''
+        Get data from any question URL, you can use a list of URLs or a list of filters to get data in bulk.
 
-        is_url_list = isinstance(urls, list)
-        is_param_list = isinstance(filters, list)
-        is_format_list = isinstance(formats, list)
+        :param urls: One URL as string for a list of URLs.
+        :param format: json, csv, xlsx.
+        :param filters: One dict for a list of dicts.
+        :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
+        :return: One data or a list of data.
+        '''
+        if filter_chunk_size < 1:
+            raise ValueError('filter_chunk_size must be positive.')
 
-        # Người dùng điền nhiều format
-            # Số lượng format = số lượng url hoặc = số lượng params -> OK
-            # Lỗi
+        if format.lower() not in ['json', 'csv', 'xlsx']:
+            raise ValueError('Metabase only supports JSON, CSV and XLSX formats.')
 
-        # Người dùng điền 1 URL
-            # Người dùng điền 0-1 params -> Run 1
-            # Người dùng điền nhiều params -> Run nhiều
+        result = asyncio.run(self.handle_urls(urls=urls, format=format.lower(), filters=filters, filter_chunk_size=filter_chunk_size))
+        self.query_count = 0
+        self.parse_count = 0
+        return result
 
-        # Người dùng điền nhiều URL
-            # Người dùng điền 0 params -> Run nhiều
-            # Người dùng điền 1 params -> Lỗi
-            # Người dùng điền nhiều params
-                # Số lượng params = Số lượng URL -> run nhiều
-                # Số lượng params != Số lượng URL -> Lỗi
-
-
-
-
+    # Main 2
     def sql_query(self, sqls, databases, format='json'):
-        result = asyncio.run(self.SQL.query_sql(sqls=sqls, databases=databases, format=format))
+        '''
+        Get data from SQL queries, you can use a list of SQL queries to get data in bulk.
+
+        :param sqls: One SQL query or a list of SQL queries.
+        :param databases: One database ID for a list or database IDs follow SQL list. Look at the database slug on the browser.
+        :param format: json, csv, xlsx.
+        :return: One data or a list of data.
+        '''
+        result = asyncio.run(self.SQL.query_sql(sqls=sqls, databases=databases, format=format.lower()))
+        self.query_count = 0
+        self.parse_count = 0
         return result
 
 
-
+    # Async for URL query
     async def handle_urls(self, urls, format='json', filters=None, filter_chunk_size=5000):
+        '''
+        Async allocation function for handling urls.
+        :param urls: One URL or a list of URLs.
+        :param format: json, csv, xlsx.
+        :param filters: One dict for a list of dicts.
+        :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
+        :return:
+        '''
 
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit_per_host=self.limit_per_host), timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
 
-            # 1 URL 1 filters
-            if not isinstance(urls, list):
+            # 1 URL 1 filter
+            if not isinstance(urls, list) and not isinstance(filters, list):
                 url_type = define_url(url=urls)
                 if url_type == 'sql':
                     if filters:
-                        raise ValueError('Currently unsupported filters for SQL URL.')
+                        raise ValueError('Currently unsupported filter for SQL URL.')
                     else:
                         return await self.SQL.export_url(session=session, url=urls, format=format)
-                elif not isinstance(filters, list):
-                    if url_type == 'card':
-                        return await self.Card.query_card(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
-                    elif url_type == 'dataset':
-                        return await self.Dataset.query_dataset(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
-                # 1 URL n filters
-                else:
-                    tasks = []
-                    for f in filters:
-                        if url_type == 'card':
-                            task = asyncio.create_task(self.Card.query_card(session=session, url=urls, format=format, filters=f, filter_chunk_size=filter_chunk_size))
-                            tasks.append(task)
-                        elif url_type == 'dataset':
-                            task = asyncio.create_task(self.Dataset.query_dataset(session=session, url=urls, format=format, filters=f, filter_chunk_size=filter_chunk_size))
-                            tasks.append(task)
+                elif url_type == 'card':
+                    return await self.Card.query_card(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
+                elif url_type == 'dataset':
+                    return await self.Dataset.query_dataset(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
 
-                    results = await asyncio.gather(*tasks)
-                    dict_results = [{'url': urls, 'filters': f, 'format': format, 'data': r} for f, r in zip(filters, results)]
-                    return dict_results
-
-            # n URL
+            # Make sure URL list and Filter list are the same length.
             else:
+                if isinstance(urls, list) and not isinstance(filters, list):
+                    filters = [filters for url in urls]
+                elif not isinstance(urls, list) and isinstance(filters, list):
+                    urls = [urls for f in filters]
+                elif len(urls) != len(filters):
+                    raise ValueError('Filter list and URL list must be the same length. Supported 1 dict - 1 list, and 1 list - 1 list.')
+
+                # Allocate URLs and Filters to functions.
                 tasks = []
-                for url in urls:
+                for url, f in zip(urls, filters):
                     url_type = define_url(url=url)
+                    if url_type == 'sql':
+                        if f:
+                            raise ValueError('Currently unsupported filter for SQL URL. Please use None for SQL URL in filter list.')
+                        else:
+                            task = asyncio.create_task(self.SQL.export_url(session=session, url=url, format=format))
+                            task.url = url
+                            task.filter = f
+                            tasks.append(task)
+                    elif url_type == 'card':
+                        task = asyncio.create_task(self.Card.query_card(session=session, url=url, format=format, filters=f, filter_chunk_size=filter_chunk_size))
+                        task.url = url
+                        task.filter = f
+                        tasks.append(task)
+                    elif url_type == 'dataset':
+                        task = asyncio.create_task(self.Dataset.query_dataset(session=session, url=url, format=format, filters=f, filter_chunk_size=filter_chunk_size))
+                        task.url = url
+                        task.filter = f
+                        tasks.append(task)
+
+                await asyncio.gather(*tasks)
+
+                record_results = [{'url': task.url, 'filter': task.filter, 'format': format, 'data': task.result()} for task in tasks]
+
+                return record_results
 
 
-
-
-
-
+    # Fetch data with retry
     async def export(self, session, url, form_data, format='json', column_sort=None):
-        format = format.lower()
+        '''
+        This function support fetch data with retry.
+        :param session: aiohttp.ClientSession
+        :param url: Export URL.
+        :param form_data: Form data with dumped value.
+        :param format: json, csv, xlsx.
+        :param column_sort: Column sort order.
+        :return:
+        '''
+
+        # Count for log
+        self.query_count += 1
+        query_number = self.query_count
+
+        # Default headers of export API endpoint.
         headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'X-Metabase-Session': self.metabase_session}
 
         @retry(stop=stop_after_attempt(self.retry_attempts), reraise=True)
         async def handler():
-            self.print_if_verbose('Querying')
+            # Print log
+            self.print_if_verbose(f'Querying {query_number}...')
+
             response = await session.post(url, headers=headers, data=form_data)
+
             # Raise if error: Connection, Timeout, Metabase server slowdown
             response.raise_for_status()
 
@@ -130,8 +196,12 @@ class Metabase(object):
 
             return data
 
+        # Call handler
         result = await handler()
+        # Raise for user errors
         if isinstance(result, Exception):
             raise result
         else:
+            # Print log then return
+            self.print_if_verbose(f'Received data {query_number}')
             return result

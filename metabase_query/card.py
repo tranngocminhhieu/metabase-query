@@ -1,9 +1,10 @@
-from urllib import parse
-import re
-import json
-from .utils import split_list, combine_results
 import asyncio
 import copy
+import json
+import re
+from urllib import parse
+
+from .utils import split_list, combine_results
 
 
 class Card:
@@ -12,7 +13,17 @@ class Card:
 
 
     async def parse_card(self, session, url, filters=None):
-        self.metabase.print_if_verbose('Parsing URL and verifying Metabase Session')
+        '''
+        Parse a card to build URL and parameters.
+        :param session: aiohttp.ClientSession.
+        :param url: URL to parse.
+        :param filters: Filters to add to parameters.
+        :return: Card data as dict.
+        '''
+        # Print log
+        self.metabase.parse_count += 1
+        parse_number = self.metabase.parse_count
+        self.metabase.print_if_verbose(f'Parsing URL and verifying Metabase Session {parse_number}')
 
         # Parse URL
         parse_result = parse.urlparse(url=url)
@@ -53,20 +64,23 @@ class Card:
         card_parameters = card_data.get('parameters')
         template_tags = card_data['dataset_query']['native']['template-tags'] if card_data.get('dataset_query') else None
 
-
-
+        # Priority for card_parameters
         if card_parameters:
-
             if filters:
+                # Raise if filter slug is not valid.
                 available_parameter_slugs = [p['slug'] for p in card_parameters]
                 invalid_filters = set(filters) - set(available_parameter_slugs)
                 if invalid_filters:
                     raise ValueError(f"The {', '.join(invalid_filters)} {'filters' if len(invalid_filters) > 2 else 'filter'} {'are' if len(invalid_filters) > 2 else 'is'} not available for this query. These are the available filters: {', '.join(available_parameter_slugs)}.")
                 else:
+                    # Save filter to query.
                     for filter in filters:
                         query[filter] = filters[filter]
 
+            # Convert to dict for mapping
             needed_parameters = {p['slug']: p for p in card_parameters if p['slug'] in query}
+
+            # Create parameters
             for q in query:
                 param_type = needed_parameters[q]['type']
                 param_target = needed_parameters[q]['target']
@@ -81,10 +95,12 @@ class Card:
         elif template_tags:
 
             if filters:
+                # Raise if filter slug is not valid.
                 invalid_filters = set(filters) - set(template_tags)
                 if invalid_filters:
                     raise ValueError(f"The {', '.join(invalid_filters)} {'filters' if len(invalid_filters) > 2 else 'filter'} {'are' if len(invalid_filters) > 2 else 'is'} not available for this query. These are the available filters: {', '.join(template_tags)}.")
                 else:
+                    # Save filter to query.
                     for filter in filters:
                         query[filter] = filters[filter]
 
@@ -94,6 +110,7 @@ class Card:
                 'text': 'category'
             }
 
+            # Create parameters
             for q in query:
                 tag = template_tags[q]
                 tag_type = tag['type']
@@ -134,11 +151,15 @@ class Card:
 
 
     async def query_card(self, session, url, format='json', filters=None, filter_chunk_size=5000):
-        format = format.lower()
-
-        if filter_chunk_size < 1:
-            raise ValueError('filter_chunk_size must be positive.')
-
+        '''
+        Send one request or multiple requests to get data from Metabase.
+        :param session: aiohttp.ClientSession
+        :param url: URL from browser.
+        :param format: json, csv, xlsx.
+        :param filters: A dict.
+        :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
+        :return: Combined data.
+        '''
 
         if filters:
             filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
@@ -155,19 +176,16 @@ class Card:
 
         card_data = await self.parse_card(session=session, url=url, filters=filters)
 
+        # Send one request if there are no filter has values > filter_chunk_size
         if max_filter_value_count <= filter_chunk_size:
-            if format not in ['json', 'csv', 'xlsx']:
-                raise ValueError('Metabase only supports JSON, CSV and XLSX formats.')
             return await self.export_card(session=session, card_data=card_data, format=format)
-
         else:
             if format not in ['json', 'csv']:
-                raise ValueError(f'Package only supports JSON and CSV formats due to data combining limitations. Your {max_filter_key} filter is over filter_chunk_size {filter_chunk_size}.')
+                raise ValueError(f'Package only supports JSON and CSV formats with bulk filter values due to data combining limitations. Your {max_filter_key} filter is over filter_chunk_size {max_filter_value_count}/{filter_chunk_size}.')
 
+            # Slit values to chunks > Create a list of card_data
             value_list = split_list(input_list=filters[max_filter_key], chunk_size=filter_chunk_size)
-
             card_data_list = []
-
             for value in value_list:
                 new_card_data = copy.deepcopy(card_data)
                 for parameter in new_card_data['parameters']:
@@ -176,6 +194,7 @@ class Card:
 
                 card_data_list.append(new_card_data)
 
+            # Send requests to get data in bulk.
             tasks = []
             for c in card_data_list:
                 task = asyncio.create_task(self.export_card(session=session, card_data=c, format=format))

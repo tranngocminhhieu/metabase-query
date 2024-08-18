@@ -12,7 +12,10 @@ class Dataset:
 
 
     async def parse_dataset(self, session, url, filters=None):
-        self.metabase.print_if_verbose('Parsing URL and verifying Metabase Session')
+        self.metabase.parse_count += 1
+        parse_number = self.metabase.parse_count
+
+        self.metabase.print_if_verbose(f'Parsing URL and verifying Metabase Session {parse_number}')
 
         parse_result = parse.urlparse(url=url)
         domain = f"{parse_result.scheme}://{parse_result.netloc}"
