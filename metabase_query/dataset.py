@@ -12,17 +12,26 @@ class Dataset:
 
 
     async def parse_dataset(self, session, url, filters=None):
+        '''
+        Parse a dataset to build URL and query filter.
+        :param session: aiohttp.ClientSession.
+        :param url: URL to parse.
+        :param filters: Filters to add to query filter.
+        :return: Dataset data as dict.
+        '''
+        # Print log
         self.metabase.parse_count += 1
         parse_number = self.metabase.parse_count
-
         self.metabase.print_if_verbose(f'Parsing URL and verifying Metabase Session {parse_number}')
 
+        # Parse URL
         parse_result = parse.urlparse(url=url)
         domain = f"{parse_result.scheme}://{parse_result.netloc}"
         query = json.loads(base64.b64decode(parse_result.fragment))
         dataset_query = query['dataset_query']  # For export
         source_table = dataset_query['query']['source-table']  # For parse
 
+        # Fetch table information
         headers = {'Content-Type': 'application/json', 'X-Metabase-Session': self.metabase.metabase_session}
         url = f'{domain}/api/table/{source_table}/query_metadata'
         response = await session.get(url=url, headers=headers)
@@ -42,8 +51,10 @@ class Dataset:
         table_data = await response.json()
 
         # Find column sort
-        query_fields = dataset_query['query'].get('fields')
+        query_fields = dataset_query['query'].get('fields') # When we drag columns on browser.
         fields = table_data.get('fields')
+
+        # Priority for query_fields
         if query_fields:
             query_field_ids = [f[1] for f in query_fields]
             field_display_names = {f['id']:f['display_name'] for f in fields}
@@ -52,11 +63,13 @@ class Dataset:
             column_sort = [f['display_name'] for f in fields]
 
         if filters:
+            # Raise if filter slug is not valid.
             available_field_names = [f['name'] for f in fields]
             invalid_filters = set(filters) - set(available_field_names)
             if invalid_filters:
                 raise ValueError(f"The {', '.join(invalid_filters)} {'filters' if len(invalid_filters) > 2 else 'filter'} {'are' if len(invalid_filters) > 2 else 'is'} not available for this table. These are the available filters: {', '.join(available_field_names)}.")
             else:
+                # Create query filter
                 query_filters = []
                 filter_ids = []
                 for filter in filters:
@@ -86,10 +99,6 @@ class Dataset:
 
 
     async def query_dataset(self, session, url, format='json', filters=None, filter_chunk_size=5000):
-        format = format.lower()
-
-        if filter_chunk_size < 1:
-            raise ValueError('filter_chunk_size must be positive.')
 
 
         if filters:
@@ -107,23 +116,23 @@ class Dataset:
 
         dataset_data = await self.parse_dataset(session=session, url=url, filters=filters)
 
+        # Send one request if there are no filter has values > filter_chunk_size
         if max_filter_value_count <= filter_chunk_size:
-            if format not in ['json', 'csv', 'xlsx']:
-                raise ValueError('Metabase only supports JSON, CSV and XLSX formats.')
             return await self.export_dataset(session=session, dataset_data=dataset_data, format=format)
 
         else:
             if format not in ['json', 'csv']:
-                raise ValueError(f'Package only supports JSON and CSV formats due to data combining limitations. Your {max_filter_key} filter is over filter_chunk_size {filter_chunk_size}.')
+                raise ValueError(f'Package only supports JSON and CSV formats with bulk filter values due to data combining limitations. Your {max_filter_key} filter is over filter_chunk_size {max_filter_value_count}/{filter_chunk_size}.')
 
+            # Slit values to chunks > Create a list of dataset_data
             value_list = split_list(input_list=filters[max_filter_key], chunk_size=filter_chunk_size)
 
+            # Get field ID to filter in loop
             field_id = [f['id'] for f in dataset_data['fields'] if f['name'] == max_filter_key][0]
-
             dataset_data.pop('fields')
 
+            # List of dataset_data
             dataset_data_list = []
-
             for value in value_list:
                 query_filter = ["=", ["field", field_id, None]] + value
                 new_dataset_data = copy.deepcopy(dataset_data)
@@ -131,6 +140,7 @@ class Dataset:
                 new_dataset_data['dataset_query']['query']['filter'] = ['and'] + [query_filter] + [f for f in query_filters[1:] if f[1][1] != field_id]
                 dataset_data_list.append(new_dataset_data)
 
+            # Send requests to get data in bulk.
             tasks = []
             for d in dataset_data_list:
                 task = asyncio.create_task(self.export_dataset(session=session, dataset_data=d, format=format))
