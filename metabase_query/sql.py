@@ -105,6 +105,6 @@ class SQL:
                     task.sql = sql
                     task.database = db
                     tasks.append(task)
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
                 record_results = [{'sql': task.sql, 'database': task.database, 'data': task.result()} for task in tasks]
                 return record_results

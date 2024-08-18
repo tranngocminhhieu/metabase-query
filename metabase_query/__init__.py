@@ -147,7 +147,7 @@ class Metabase(object):
                         task.filter = f
                         tasks.append(task)
 
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
 
                 record_results = [{'url': task.url, 'filter': task.filter, 'format': format, 'data': task.result()} for task in tasks]
 
