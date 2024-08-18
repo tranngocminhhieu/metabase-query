@@ -1,4 +1,8 @@
 # Metabase query
+[![Downloads](https://img.shields.io/pypi/dm/metabase-query)](https://pypi.org/project/metabase-query)
+[![Pypi](https://img.shields.io/pypi/v/metabase-query)](https://pypi.org/project/metabase-query)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/tranngocminhhieu/metabase-query/issues)
+[![MIT](https://img.shields.io/github/license/tranngocminhhieu/metabase-query)](https://github.com/tranngocminhhieu/metabase-query/blob/main/LICENSE)
 
 ![example-table.png](https://raw.githubusercontent.com/tranngocminhhieu/metabase-query/main/example-table.png)
 
