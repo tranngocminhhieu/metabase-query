@@ -17,6 +17,7 @@ metabase-query is a Python package designed to simplify data retrieval from Meta
 - **Error Handling**: Supports automatic retries in case of server errors or slowdowns.
 - **Bulk Filter Support**: Allows entering multiple filter values in a single request.
 - **Query Versatility**: Supports both saved and unsaved questions, as well as SQL queries.
+- **Utilize asynchronous libraries**: Send multiple requests concurrently to retrieve data efficiently.
 
 ## Installation
 To install the package, use the following pip command:
