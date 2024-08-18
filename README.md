@@ -38,6 +38,17 @@ url = 'https://your-domain.com/question/123456-example?created_at=past3months'
 data = mb.query(url=url, format='json')
 ```
 
+#### Table URL and Unsaved question URL
+
+```python
+url = 'https://your-domain.com/question#eyJkYXRhc2V0X3F1ZXJ5Ijp7ImRhdGFiYXNlIjo2LCJxdWVyeSI6eyJzb3VyY2UtdGFibGUiOjQ4MzV9LCJ0eXBlIjoicXVlcnkifSwiZGlzcGxheSI6InRhYmxlIiwidmlzdWFsaXphdGlvbl9zZXR0aW5ncyI6e319'
+data = mb.query(url=url, format='csv')
+
+# Example saving data to a CSV file.
+with open('data.csv', 'rb') as f:
+    f.write(data)
+```
+
 ### Advanced Settings
 ```python
 mb = Metabase(metabase_session='YourMetabaseSession',  retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None)
