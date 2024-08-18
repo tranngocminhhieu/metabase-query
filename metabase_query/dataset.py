@@ -99,8 +99,6 @@ class Dataset:
 
 
     async def query_dataset(self, session, url, format='json', filters=None, filter_chunk_size=5000):
-
-
         if filters:
             filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
             # Make sure value is list
@@ -112,7 +110,6 @@ class Dataset:
         else:
             max_filter_key = None
             max_filter_value_count = 0
-
 
         dataset_data = await self.parse_dataset(session=session, url=url, filters=filters)
 
