@@ -1,16 +1,15 @@
 import asyncio
-
 import aiohttp
-import nest_asyncio
-
 from .card import Card
 from .dataset import Dataset
 from .sql import SQL
-
-nest_asyncio.apply()
-
+import sys
 from tenacity import *
 from .utils import raise_retry_errors, combine_results, define_url
+
+if 'ipykernel' in sys.modules:
+    import nest_asyncio
+    nest_asyncio.apply()
 
 class Metabase(object):
     def __init__(self, metabase_session, retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None):
