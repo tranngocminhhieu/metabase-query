@@ -1,4 +1,7 @@
 # Metabase query
+
+![example-table.png](https://raw.githubusercontent.com/tranngocminhhieu/metabase-query/main/example-table.png)
+
 This repository provides a Python package designed to simplify interactions with Metabase, allowing you to execute queries using URLs or SQL directly within your Python code. Whether you are working with saved questions, SQL queries, or need to filter large datasets across multiple queries, this package offers a streamlined and flexible approach to retrieving data from your Metabase instance. With options for handling retries, connection limits, and custom filters, it’s built to handle complex querying needs with ease.
 ## Installation
 ```shell
