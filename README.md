@@ -7,7 +7,7 @@ This repository provides a Python package designed to simplify interactions with
 ```shell
 pip install --upgrade metabase-query
 ```
----
+
 ## Quick start example
 
 ### Create Metabase object
