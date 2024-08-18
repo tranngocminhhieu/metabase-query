@@ -14,6 +14,7 @@ class Dataset:
     async def parse_dataset(self, session, url, filters=None):
         '''
         Parse a dataset to build URL and query filter.
+
         :param session: aiohttp.ClientSession.
         :param url: URL to parse.
         :param filters: Filters to add to query filter.
@@ -99,6 +100,16 @@ class Dataset:
 
 
     async def query_dataset(self, session, url, format='json', filters=None, filter_chunk_size=5000):
+        '''
+        Send one request or multiple requests to get data from Metabase.
+
+        :param session: aiohttp.ClientSession.
+        :param url: URL to query.
+        :param format: json, csv, xlsx.
+        :param filters: A dict.
+        :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
+        :return: Combined data.
+        '''
         if filters:
             filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
             # Make sure value is list

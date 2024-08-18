@@ -12,6 +12,7 @@ class SQL:
     async def export_url(self, session, url, format='json'):
         '''
         Export data for SQL URL.
+
         :param session: aiohttp.ClientSession.
         :param url: SQL URL.
         :param format: json, csv, xlsx.
@@ -35,6 +36,7 @@ class SQL:
     async def export_sql(self, session, sql, database, format='json'):
         '''
         Export data for SQL query.
+
         :param session: aiohttp.ClientSession.
         :param sql: SQL query.
         :param database: One database ID. Look at the slug on the browser.
@@ -74,6 +76,7 @@ class SQL:
     async def query_sql(self, sqls, databases, format='json'):
         '''
         Send one request or multiple requests with SQL to get data from Metabase.
+
         :param sqls: A SQL string or list of SQL.
         :param databases: One database ID for a list or database IDs follow SQL list. Look at the database slug on the browser.
         :param format: json, csv, xlsx.

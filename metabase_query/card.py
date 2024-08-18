@@ -15,6 +15,7 @@ class Card:
     async def parse_card(self, session, url, filters=None):
         '''
         Parse a card to build URL and parameters.
+
         :param session: aiohttp.ClientSession.
         :param url: URL to parse.
         :param filters: Filters to add to parameters.
@@ -151,6 +152,7 @@ class Card:
     async def query_card(self, session, url, format='json', filters=None, filter_chunk_size=5000):
         '''
         Send one request or multiple requests to get data from Metabase.
+
         :param session: aiohttp.ClientSession
         :param url: URL from browser.
         :param format: json, csv, xlsx.

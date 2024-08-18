@@ -89,6 +89,7 @@ class Metabase(object):
     async def handle_urls(self, urls, format='json', filters=None, filter_chunk_size=5000):
         '''
         Async allocation function for handling urls.
+
         :param urls: One URL or a list of URLs.
         :param format: json, csv, xlsx.
         :param filters: One dict for a list of dicts.
@@ -154,6 +155,7 @@ class Metabase(object):
     async def export(self, session, url, form_data, format='json', column_sort=None):
         '''
         This function support fetch data with retry.
+
         :param session: aiohttp.ClientSession
         :param url: Export URL.
         :param form_data: Form data with dumped value.
