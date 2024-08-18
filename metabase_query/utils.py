@@ -11,11 +11,15 @@ def raise_retry_errors(error, retry_errors):
     else:
         return Exception(error)
 
+
 def split_list(input_list, chunk_size):
     return [input_list[i:i + chunk_size] for i in range(0, len(input_list), chunk_size)]
 
 
-def combine_results(results, format='json'):
+def combine_results(results, format='json', verbose=True):
+    if [r for r in results if isinstance(r, Exception)] and verbose:
+        print('Some requests failed because the retry count was exceeded. However, you still received data from successful requests.')
+
     success_results = [r for r in results if not isinstance(r, Exception)]
 
     if format == 'json':
@@ -35,7 +39,6 @@ def combine_results(results, format='json'):
 
 def define_url(url):
     parse_result = parse.urlparse(url=url)
-
     if re.search(pattern='^/question/(\d*)(\-.*)?', string=parse_result.path):
         return 'card'
     else:

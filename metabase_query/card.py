@@ -57,10 +57,8 @@ class Card:
         else:
             column_sort = None
 
-
-        parameters = []
-
         # Create parameters
+        parameters = []
         card_parameters = card_data.get('parameters')
         template_tags = card_data['dataset_query']['native']['template-tags'] if card_data.get('dataset_query') else None
 
@@ -173,7 +171,6 @@ class Card:
             max_filter_key = None
             max_filter_value_count = 0
 
-
         card_data = await self.parse_card(session=session, url=url, filters=filters)
 
         # Send one request if there are no filter has values > filter_chunk_size
@@ -201,4 +198,4 @@ class Card:
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            return combine_results(results=results, format=format)
+            return combine_results(results=results, format=format, verbose=self.metabase.verbose)

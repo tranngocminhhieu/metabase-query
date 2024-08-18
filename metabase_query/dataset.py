@@ -147,4 +147,4 @@ class Dataset:
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            return combine_results(results=results, format=format)
+            return combine_results(results=results, format=format, verbose=self.metabase.verbose)
