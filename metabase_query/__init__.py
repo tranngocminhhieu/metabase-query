@@ -104,7 +104,7 @@ class Metabase(object):
             if not isinstance(urls, list) and not isinstance(filters, list):
                 url_type = define_url(url=urls)
                 if url_type == 'sql':
-                    return await self.SQL.export_url(session=session, url=urls, format=format, filters=filters)
+                    return await self.SQL.export_url(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
                 elif url_type == 'card':
                     return await self.Card.query_card(session=session, url=urls, format=format, filters=filters, filter_chunk_size=filter_chunk_size)
                 elif url_type == 'dataset':
@@ -127,7 +127,7 @@ class Metabase(object):
                 for url, f in zip(urls, filters):
                     url_type = define_url(url=url)
                     if url_type == 'sql':
-                        task = asyncio.create_task(self.SQL.export_url(session=session, url=url, format=format, filters=filters))
+                        task = asyncio.create_task(self.SQL.export_url(session=session, url=url, format=format, filters=filters, filter_chunk_size=filter_chunk_size))
                         task.url = url
                         task.filter = f
                         tasks.append(task)
