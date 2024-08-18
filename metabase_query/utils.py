@@ -17,6 +17,10 @@ def split_list(input_list, chunk_size):
 
 
 def combine_results(results, format='json', verbose=True):
+    format = format.lower()
+    if format not in ['json', 'csv']:
+        raise ValueError('This function supports JSON and CSV due to data combining limitations.')
+
     if [r for r in results if isinstance(r, Exception)] and verbose:
         print('Some requests failed because the retry count was exceeded. However, you still received data from successful requests.')
 

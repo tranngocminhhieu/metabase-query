@@ -78,7 +78,7 @@ class SQL:
         Send one request or multiple requests with SQL to get data from Metabase.
 
         :param sqls: A SQL string or list of SQL.
-        :param databases: One database ID for a list or database IDs follow SQL list. Look at the database slug on the browser.
+        :param databases: One database ID or a list or database IDs follow SQL list. Look at the database slug on the browser.
         :param format: json, csv, xlsx.
         :return: One data or a list of data.
         '''

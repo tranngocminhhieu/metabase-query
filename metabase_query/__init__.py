@@ -48,13 +48,13 @@ class Metabase(object):
             print(*args)
 
     # Main 1
-    def query(self, urls, format='json', filters=None, filter_chunk_size=5000):
+    def query(self, url, format='json', filter=None, filter_chunk_size=5000):
         '''
         Get data from any question URL, you can use a list of URLs or a list of filters to get data in bulk.
 
-        :param urls: One URL as string for a list of URLs.
+        :param url: One URL as string for a list of URLs.
         :param format: json, csv, xlsx.
-        :param filters: One dict for a list of dicts.
+        :param filter: One dict for a list of dicts.
         :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
         :return: One data or a list of data.
         '''
@@ -64,22 +64,22 @@ class Metabase(object):
         if format.lower() not in ['json', 'csv', 'xlsx']:
             raise ValueError('Metabase only supports JSON, CSV and XLSX formats.')
 
-        result = asyncio.run(self.handle_urls(urls=urls, format=format.lower(), filters=filters, filter_chunk_size=filter_chunk_size))
+        result = asyncio.run(self.handle_urls(urls=url, format=format.lower(), filters=filter, filter_chunk_size=filter_chunk_size, auto_combine=True))
         self.query_count = 0
         self.parse_count = 0
         return result
 
     # Main 2
-    def sql_query(self, sqls, databases, format='json'):
+    def sql_query(self, sql, database, format='json'):
         '''
         Get data from SQL queries, you can use a list of SQL queries to get data in bulk.
 
-        :param sqls: One SQL query or a list of SQL queries.
-        :param databases: One database ID for a list or database IDs follow SQL list. Look at the database slug on the browser.
+        :param sql: One SQL query or a list of SQL queries.
+        :param database: One database ID or a list or database IDs follow SQL list. Look at the database slug on the browser.
         :param format: json, csv, xlsx.
         :return: One data or a list of data.
         '''
-        result = asyncio.run(self.SQL.query_sql(sqls=sqls, databases=databases, format=format.lower()))
+        result = asyncio.run(self.SQL.query_sql(sqls=sql, databases=database, format=format.lower()))
         self.query_count = 0
         self.parse_count = 0
         return result
@@ -114,10 +114,13 @@ class Metabase(object):
 
             # Make sure URL list and Filter list are the same length.
             else:
+                # n URL 1 filters > OK
                 if isinstance(urls, list) and not isinstance(filters, list):
                     filters = [filters for url in urls]
+                # 1 URL n filters > OK
                 elif not isinstance(urls, list) and isinstance(filters, list):
                     urls = [urls for f in filters]
+                # n URL != filters > Raise
                 elif len(urls) != len(filters):
                     raise ValueError('Filter list and URL list must be the same length. Supported 1 dict - 1 list, and 1 list - 1 list.')
 
