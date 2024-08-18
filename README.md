@@ -6,7 +6,21 @@
 
 ![example-table.png](https://raw.githubusercontent.com/tranngocminhhieu/metabase-query/main/example-table.png)
 
-This repository provides a Python package designed to simplify interactions with Metabase, allowing you to execute queries using URLs or SQL directly within your Python code. Whether you are working with saved questions, SQL queries, or need to filter large datasets across multiple queries, this package offers a streamlined and flexible approach to retrieving data from your Metabase instance. With options for handling retries, connection limits, and custom filters, it’s built to handle complex querying needs with ease.
+This package will help Data workers get data from [Metabase](https://www.metabase.com/) questions more easily and effectively. It only focuses on the [Card Query API](https://www.metabase.com/docs/latest/api/card#post-apicardcard-idqueryexport-format), [Dataset API](https://www.metabase.com/docs/latest/api/dataset#post-apidatasetexport-format) and does not include other Metabase APIs.
+
+It is allowing you to execute queries using URLs or SQL directly within your Python code. Whether you are working with saved questions, SQL queries, or need to filter large datasets across multiple queries, this package offers a streamlined and flexible approach to retrieving data from your Metabase. With options for handling retries, connection limits, and custom filters, it’s built to handle complex querying needs with ease.
+
+
+## Features
+1. Get question data in any data format provided by Metabase (JSON, CSV, XLSX).
+2. Input question URL and Metabase Session. No need to provide parameters payload.
+3. JSON results have the same column sort order as the browser.
+4. Automatically check if Metabase session is available.
+5. Allow retry if an error occurs due to server slowdown.
+6. Allow entering multiple param values in bulk.
+7. Support both saved questions and unsaved questions.
+8. Support SQL query.
+
 ## Installation
 ```shell
 pip install --upgrade metabase-query
