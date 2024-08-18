@@ -64,6 +64,7 @@ mb = Metabase(metabase_session='YourMetabaseSession',  retry_errors=None, retry_
 
 ### Working with Filters
 #### Simple Filter
+It will combine both filter in URL and filter dictionary. Priority filter dictionary if it exists on URL.
 ```python
 filter = {
     'order_id': [123456, 456789, 789012], # UNLIMITED values!!!
