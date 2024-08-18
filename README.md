@@ -102,15 +102,15 @@ results = mb.query(url=urls)
 #### URL List with Filter List
 ```python
 urls = [
-    'https://your-domain.com/question/123456-example',
-    'https://your-domain.com/question/123456-example',
-    'https://your-domain.com/question/123456-example'
+    'https://your-domain.com/question/123456-example', # 1
+    'https://your-domain.com/question/123456-example', # 2
+    'https://your-domain.com/question/123456-example' # 3
 ]
 
 filters = [
-    {'created_at': '2024-08-01~2024-08-05'},
-    {'created_at': '2024-08-06~2024-08-10'},
-    {'created_at': '2024-08-11~2024-08-15'}
+    {'created_at': '2024-08-01~2024-08-05'}, # For URL 1
+    {'created_at': '2024-08-06~2024-08-10'}, # For URL 2
+    {'created_at': '2024-08-11~2024-08-15'} # For URL 3
 ]
 
 results = mb.query(url=urls, filter=filters)
