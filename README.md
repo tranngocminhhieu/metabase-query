@@ -24,7 +24,10 @@ To install the package, use the following pip command:
 ```shell
 pip install --upgrade metabase-query
 ```
-
+Install from GitHub:
+```shell
+pip install --upgrade git+https://github.com/tranngocminhhieu/metabase-query.git
+```
 ## Usage
 
 ### Basic Example
