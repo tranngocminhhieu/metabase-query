@@ -5,7 +5,7 @@ README = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='metabase-query',
-    version='1.0.1',
+    version='1.0.2',
     description='Metabase query API with any URL and easy to filter.',
     long_description=README,
     long_description_content_type="text/markdown",

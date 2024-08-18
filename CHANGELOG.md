@@ -1,5 +1,9 @@
 # 1.0.1
-Add `return_exceptions` to `asyncio.gather`.
+- Add `return_exceptions` to `asyncio.gather`.
+- Auto apply nest_asyncio for Notebook.
+
+# 1.0.2
+- Rename function `sql_query` to `sql`.
 
 # 1.0.0
 1. Get question data in any data format provided by Metabase (JSON, CSV, XLSX).

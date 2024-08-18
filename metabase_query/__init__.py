@@ -69,7 +69,7 @@ class Metabase(object):
         return result
 
     # Main 2
-    def sql_query(self, sql, database, format='json'):
+    def sql(self, sql, database, format='json'):
         '''
         Get data from SQL queries, you can use a list of SQL queries to get data in bulk.
 

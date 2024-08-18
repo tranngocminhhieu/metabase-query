@@ -122,7 +122,7 @@ SELECT * FROM your_table LIMIT 1000
 
 database = '1-presto'
 
-data = mb.sql_query(sql=sql, database=database, format='json')
+data = mb.sql(sql=sql, database=database, format='json')
 ```
 - `sql`: One SQL query or a list of SQL queries.
 - `database`: One database ID or a list or database IDs follow SQL list. Look at the database slug on the browser.
@@ -139,7 +139,7 @@ SELECT * FROM your_table WHERE created_at BETWEEN DATE '2024-08-06' AND '2024-08
 
 sqls = [sql_1, sql_2]
 
-results = mb.sql_query(sql=sqls, database=database)
+results = mb.sql(sql=sqls, database=database)
 ```
 ---
 Goood luck!
