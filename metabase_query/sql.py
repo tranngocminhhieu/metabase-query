@@ -5,42 +5,20 @@ import base64
 import re
 import aiohttp
 import asyncio
-from .utils import split_list, combine_results
+from .utils import split_list, combine_results, parse_filters
 
 class SQL:
     def __init__(self, metabase):
         self.metabase = metabase
 
-    async def export_url(self, session, url, format='json', filters=None, filter_chunk_size=5000):
-        '''
-        Export data for SQL URL.
 
-        :param session: aiohttp.ClientSession.
-        :param url: SQL URL.
-        :param format: json, csv, xlsx.
-        :return: One data.
-        '''
-
+    async def parse_url(self, url, filters=None):
         parse_result = parse.urlparse(url=url)
         domain = f"{parse_result.scheme}://{parse_result.netloc}"
         fragment = json.loads(base64.b64decode(parse_result.fragment))
         dataset_query = fragment['dataset_query']
         query = parse.parse_qs(parse_result.query)
         parameters = fragment['parameters']
-        url = f"{domain}/api/dataset/{format}"
-
-        # Clean filters and calculate bulk values
-        if filters:
-            filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
-            # Make sure value is list, the same with query
-            for filter in filters:
-                if not isinstance(filters[filter], list):
-                    filters[filter] = [filters[filter]]
-            max_filter_key = max(filters, key=lambda k: len(filters[k]))
-            max_filter_value_count = len(filters[max_filter_key])
-        else:
-            max_filter_key = None
-            max_filter_value_count = 0
 
         # Prepare Form data (dataset_query)
         if filters:
@@ -65,10 +43,37 @@ class SQL:
 
         dataset_query['parameters'] = parameters
 
+        data = {
+            'domain': domain,
+            'dataset_query': dataset_query
+        }
+
+        return data
+
+
+    async def export_url(self, session, url_data, format='json'):
+        url = f"{url_data['domain']}/api/dataset/{format}"
+        form_data = {'query': json.dumps(url_data['dataset_query'])}
+        return await self.metabase.export(session=session, url=url, form_data=form_data, format=format)
+
+
+    async def query_url(self, session, url, format='json', filters=None, filter_chunk_size=5000):
+        '''
+        Export data for SQL URL.
+
+        :param session: aiohttp.ClientSession.
+        :param url: SQL URL.
+        :param format: json, csv, xlsx.
+        :return: One data.
+        '''
+
+        filters, max_filter_key, max_filter_value_count = parse_filters(filters)
+
+        url_data = await self.parse_url(url=url, filters=filters)
+
         # Send one request if there are no filter has values > filter_chunk_size
         if max_filter_value_count <= filter_chunk_size:
-            form_data = {'query': json.dumps(dataset_query)}
-            return await self.metabase.export(session=session, url=url, form_data=form_data, format=format)
+            return await self.export_url(session=session, url_data=url_data, format=format)
 
         else:
             if format not in ['json', 'csv']:
@@ -76,22 +81,23 @@ class SQL:
 
             # Slit values to chunks > Create a list of card_data
             value_list = split_list(input_list=filters[max_filter_key], chunk_size=filter_chunk_size)
-            dataset_query_list = []
+
+            url_data_list = []
             for value in value_list:
-                new_dataset_query = copy.deepcopy(dataset_query)
-                for parameter in new_dataset_query['parameters']:
+                new_url_data = copy.deepcopy(url_data)
+                for parameter in new_url_data['dataset_query']['parameters']:
                     if parameter['target'][-1][-1] == max_filter_key:
                         parameter['value'] = value
-                dataset_query_list.append(new_dataset_query)
+                url_data_list.append(new_url_data)
 
             tasks = []
-            for d in dataset_query_list:
-                form_data = {'query': json.dumps(d)}
-                task = asyncio.create_task(self.metabase.export(session=session, url=url, form_data=form_data, format=format))
+            for u in url_data_list:
+                task = asyncio.create_task(self.export_url(session=session, url_data=u, format=format))
                 tasks.append(task)
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
             return combine_results(results=results, format=format, verbose=self.metabase.verbose)
+
 
     async def export_sql(self, session, sql, database, format='json'):
         '''

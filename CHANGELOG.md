@@ -1,3 +1,6 @@
+# 1.0.4
+- Fix missing input filter_chunk_size for SQL URL.
+
 # 1.0.3
 - Add more package to install_requires.
 - SQL URL support filters and parameters.

@@ -4,7 +4,7 @@ import json
 import re
 from urllib import parse
 
-from .utils import split_list, combine_results
+from .utils import split_list, combine_results, parse_filters
 
 
 class Card:
@@ -161,17 +161,8 @@ class Card:
         :return: Combined data.
         '''
 
-        if filters:
-            filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
-            # Make sure value is list, the same with query
-            for filter in filters:
-                if not isinstance(filters[filter], list):
-                    filters[filter] = [filters[filter]]
-            max_filter_key = max(filters, key=lambda k: len(filters[k]))
-            max_filter_value_count = len(filters[max_filter_key])
-        else:
-            max_filter_key = None
-            max_filter_value_count = 0
+
+        filters, max_filter_key, max_filter_value_count = parse_filters(filters)
 
         card_data = await self.parse_card(session=session, url=url, filters=filters)
 

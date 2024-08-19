@@ -52,3 +52,23 @@ def define_url(url):
             return 'sql'
         else:
             return 'dataset'
+
+
+def parse_filters(filters):
+    if filters:
+        # Rename keys
+        filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
+        # Convert value to list
+        for filter in filters:
+            if not isinstance(filters[filter], list):
+                filters[filter] = [filters[filter]]
+        # Find max key, value count
+        max_filter_key = max(filters, key=lambda k: len(filters[k]))
+        max_filter_value_count = len(filters[max_filter_key])
+    else:
+        max_filter_key = None
+        max_filter_value_count = 0
+
+    data = (filters, max_filter_key, max_filter_value_count)
+
+    return data

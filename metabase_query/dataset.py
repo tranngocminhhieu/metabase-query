@@ -1,7 +1,7 @@
 import json
 import base64
 from urllib import parse
-from .utils import split_list, combine_results
+from .utils import split_list, combine_results, parse_filters
 import asyncio
 import copy
 
@@ -110,17 +110,8 @@ class Dataset:
         :param filter_chunk_size: If you have a bulk value filter, the package will splits your values into chunks to send the requests, and then concat the results into a single data.
         :return: Combined data.
         '''
-        if filters:
-            filters = {str(f).lower().replace(' ', '_'): filters[f] for f in filters}
-            # Make sure value is list
-            for filter in filters:
-                if not isinstance(filters[filter], list):
-                    filters[filter] = [filters[filter]]
-            max_filter_key = max(filters, key=lambda k: len(filters[k]))
-            max_filter_value_count = len(filters[max_filter_key])
-        else:
-            max_filter_key = None
-            max_filter_value_count = 0
+
+        filters, max_filter_key, max_filter_value_count = parse_filters(filters)
 
         dataset_data = await self.parse_dataset(session=session, url=url, filters=filters)
 
