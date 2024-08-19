@@ -130,7 +130,7 @@ sql = '''
 SELECT * FROM your_table LIMIT 1000
 '''
 
-database = '1-presto'
+database = '1-presto' # or integer ID
 
 data = mb.sql(sql=sql, database=database, format='json')
 ```
