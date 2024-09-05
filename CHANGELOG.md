@@ -1,3 +1,7 @@
+# 1.0.5
+- Optimize code for reusable.
+- Fix input parameter of SQL URL.
+
 # 1.0.4
 - Fix missing input filter_chunk_size for SQL URL.
 
