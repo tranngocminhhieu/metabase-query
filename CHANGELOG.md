@@ -1,3 +1,6 @@
+# 1.0.6
+- Fix error with saved queries that does not have filter.
+
 # 1.0.5
 - Optimize code for reusable.
 - Fix input parameter of SQL URL.

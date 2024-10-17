@@ -61,7 +61,7 @@ class Card:
         # Create parameters
         parameters = []
         card_parameters = card_data.get('parameters')
-        template_tags = card_data['dataset_query']['native']['template-tags'] if card_data.get('dataset_query') else None
+        template_tags = card_data['dataset_query'].get('native', {}).get('template-tags', {}) if card_data.get('dataset_query') else None
 
         # Priority for card_parameters
         if card_parameters:
