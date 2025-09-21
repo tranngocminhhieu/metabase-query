@@ -1,4 +1,4 @@
-# Metabase query
+# Metabase-Query — Python library for Metabase API
 [![Downloads](https://img.shields.io/pypi/dm/metabase-query)](https://pypi.org/project/metabase-query)
 [![Pypi](https://img.shields.io/pypi/v/metabase-query)](https://pypi.org/project/metabase-query)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/tranngocminhhieu/metabase-query/issues)
