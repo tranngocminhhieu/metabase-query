@@ -1,3 +1,7 @@
+# 1.1.0
+- Support `cookies` param for `Metabase`
+- Support `parse_raw_cookies()` in [utils.py](metabase_query/utils.py)
+
 # 1.0.6
 - Fix error with saved queries that does not have filter.
 
