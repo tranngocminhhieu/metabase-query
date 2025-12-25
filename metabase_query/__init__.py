@@ -12,7 +12,7 @@ if 'ipykernel' in sys.modules:
     nest_asyncio.apply()
 
 class Metabase(object):
-    def __init__(self, metabase_session, retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None):
+    def __init__(self, metabase_session=None, cookies=None, retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None):
         '''
         Setting Metabase object.
 
@@ -32,6 +32,7 @@ class Metabase(object):
         self.timeout = timeout
         self.verbose = verbose
         self.domain = domain
+        self.cookies = cookies
 
         # Child classes
         self.Card = Card(metabase=self)
@@ -41,6 +42,9 @@ class Metabase(object):
         # For printing log
         self.query_count = 0
         self.parse_count = 0
+
+        if not metabase_session and not cookies:
+            raise AttributeError('You must specify a metabase_session or cookies.')
 
     def print_if_verbose(self, *args):
         if self.verbose:
@@ -98,7 +102,7 @@ class Metabase(object):
         :return:
         '''
 
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit_per_host=self.limit_per_host), timeout=aiohttp.ClientTimeout(total=self.timeout)) as session:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit_per_host=self.limit_per_host), timeout=aiohttp.ClientTimeout(total=self.timeout), cookies=self.cookies) as session:
 
             # 1 URL 1 filter
             if not isinstance(urls, list) and not isinstance(filters, list):
@@ -167,7 +171,9 @@ class Metabase(object):
         query_number = self.query_count
 
         # Default headers of export API endpoint.
-        headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'X-Metabase-Session': self.metabase_session}
+        headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
+        if self.metabase_session:
+            headers['X-Metabase-Session'] = self.metabase_session
 
         @retry(stop=stop_after_attempt(self.retry_attempts), reraise=True)
         async def handler():
