@@ -33,7 +33,9 @@ class Dataset:
         source_table = dataset_query['query']['source-table']  # For parse
 
         # Fetch table information
-        headers = {'Content-Type': 'application/json', 'X-Metabase-Session': self.metabase.metabase_session}
+        headers = {'Content-Type': 'application/json'}
+        if self.metabase.metabase_session:
+            headers['X-Metabase-Session'] = self.metabase.metabase_session
         url = f'{domain}/api/table/{source_table}/query_metadata'
         response = await session.get(url=url, headers=headers)
 

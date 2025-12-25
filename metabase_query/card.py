@@ -29,11 +29,13 @@ class Card:
         # Parse URL
         parse_result = parse.urlparse(url=url)
         domain = f"{parse_result.scheme}://{parse_result.netloc}"
-        question = re.search(pattern='^/question/(\d*)(\-.*)?', string=parse_result.path).group(1)
+        question = re.search(pattern=r'^/question/(\d*)(\-.*)?', string=parse_result.path).group(1)
         query = parse.parse_qs(parse_result.query)
 
         # Fetch card information
-        headers = {'Content-Type': 'application/json', 'X-Metabase-Session': self.metabase.metabase_session}
+        headers = {'Content-Type': 'application/json'}
+        if self.metabase.metabase_session:
+            headers['X-Metabase-Session'] = self.metabase.metabase_session
         card_url = f'{domain}/api/card/{question}'
         response = await session.get(url=card_url, headers=headers)
 

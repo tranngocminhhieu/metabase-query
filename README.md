@@ -57,7 +57,8 @@ with open('data.csv', 'rb') as f:
 ```python
 mb = Metabase(metabase_session='YourMetabaseSession',  retry_errors=None, retry_attempts=3, limit_per_host=5, timeout=600, verbose=True, domain=None)
 ```
-- `metabase_session`: Your Metabase Session.
+- `metabase_session`: Your Metabase Session, it is not required if you have cookies.
+- `cookies`: Your cookies.
 - `retry_errors`: Set to `None` to retry on any error, or provide a list of specific errors to retry only for those. Default is `None`.
 - `retry_attempts`: The number of retry attempts in case of an error. Default is `3`; set to `0` to disable retries.
 - `limit_per_host`: The maximum number of connections allowed per host. Default is `5`.

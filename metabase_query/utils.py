@@ -2,6 +2,7 @@ import re
 from urllib import parse
 import json
 import base64
+from http.cookies import SimpleCookie
 
 def raise_retry_errors(error, retry_errors):
     if not retry_errors:
@@ -72,3 +73,24 @@ def parse_filters(filters):
     data = (filters, max_filter_key, max_filter_value_count)
 
     return data
+
+
+def parse_raw_cookies(file):
+    '''
+    How to get cookie_file?
+    - Use Cookie-Editor extension on Chrome to get the raw cookie and save it to a text file, for example: cookie.txt
+    - Extension link: https://chrome.google.com/webstore/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
+
+    :param file: cookies.txt
+    :return: cookies as dict
+    '''
+    with open(file, 'r') as f:
+        raw_cookie = f.read()
+    try:
+        cookie = json.loads(raw_cookie)
+        cookies = {item['name']:item['value'] for item in cookie}
+    except:
+        cookie = SimpleCookie()
+        cookie.load(raw_cookie)
+        cookies = {key:value.value for key,value in cookie.items()}
+    return cookies
